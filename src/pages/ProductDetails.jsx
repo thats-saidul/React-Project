@@ -1,19 +1,44 @@
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
-// import {products} from "../data/products.js";
 
-const ProductDetails = ({ products }) => {
-    // URL theke prodict ID niye asha
+const ProductDetails = () => {
+    // Get the product ID from the URL
     const { productid } = useParams();
 
-    // ID onujayi product khuja ber kora
-    const product = products.find(
-        (item) => item.id === Number(productid)
-    );
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Product na thakle error message dekhano
-    if (!product) {
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const res = await fetch(
+                    `https://fakestoreapi.com/products/${productid}`
+                );
+                if (!res.ok) throw new Error("Failed to fetch product data");
+
+                const data = await res.json();
+                setProduct(data);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProduct();
+    }, [productid]);
+
+    // Show a loading message while data is being fetched
+    if (loading) {
+        return <div className="p-6 text-center text-xl">Loading...</div>;
+    }
+
+    // Show an error message if the request failed or no product was found
+    if (error || !product) {
         return (
             <div className="p-6 text-center">
                 <h1 className="text-2xl font-bold text-red-500">
@@ -32,29 +57,25 @@ const ProductDetails = ({ products }) => {
 
     return (
         <div className="min-h-screen p-6">
-
             <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
-
                 <h1 className="text-3xl font-bold text-slate-800 mb-6">
                     Product Details
                 </h1>
 
                 <div className="flex flex-col md:flex-row gap-8">
-
                     {/* Product Image */}
                     <div className="md:w-1/2">
                         <img
                             src={product.image}
-                            alt={product.name}
-                            className="w-full h-72 object-cover rounded-lg"
+                            alt={product.title}
+                            className="w-full h-72 object-contain rounded-lg"
                         />
                     </div>
 
                     {/* Product Information */}
                     <div className="md:w-1/2 space-y-4">
-
                         <h2 className="text-2xl font-bold text-slate-800">
-                            {product.name}
+                            {product.title}
                         </h2>
 
                         <p className="text-gray-600">
@@ -62,12 +83,14 @@ const ProductDetails = ({ products }) => {
                         </p>
 
                         <p className="text-gray-600">
-                            <strong>Price:</strong> ৳
-                            {product.price.toLocaleString("en-BD")}
+                            <strong>Price:</strong> ${product.price}
                         </p>
 
+                        <p className="text-gray-600">{product.description}</p>
+
                         <p className="text-gray-600">
-                            <strong>Stock:</strong> {product.stock}
+                            <strong>Rating:</strong> {product.rating?.rate} (
+                            {product.rating?.count} reviews)
                         </p>
 
                         <p className="text-gray-600">
@@ -80,7 +103,6 @@ const ProductDetails = ({ products }) => {
                         >
                             Back to Home
                         </Link>
-
                     </div>
                 </div>
             </div>
