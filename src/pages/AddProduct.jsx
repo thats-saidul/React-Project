@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { addProduct } from "../api/productApi";
+import useApicall from "../hooks/useApicall";
 
 function AddProduct() {
   
@@ -12,9 +13,12 @@ function AddProduct() {
     category: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [result, setResult] = useState(null);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState(null);
+//  const [result, setResult] = useState(null);
+  
+  const submitFunc = useApicall();
+
 
   
   const handleChange = (e) => {
@@ -26,30 +30,9 @@ function AddProduct() {
   
     e.preventDefault();
 
-    try {
-      setLoading(true);
-      setError(null);
-      setResult(null);
-
-      
-      const payload = { ...formData, price: parseInt(formData.price, 10) };
-
-      const data = await addProduct(payload);
-      setResult(data);
-
-      
-      setFormData({
-        title: "",
-        price: "",
-        description: "",
-        image: "",
-        category: "",
-      });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    const payload = { ...formData, price: parseInt(formData.price, 10) };
+    submitFunc.fetchData("https://fakestoreapi.com/products", { method: "POST", body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } })
+    
   };
 
   const inputClass =
@@ -125,21 +108,21 @@ function AddProduct() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={submitFunc.loading}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {loading ? "Adding..." : "Add Product"}
+            {submitFunc.loading ? "Adding..." : "Add Product"}
           </button>
         </form>
 
         
-        {error && <p className="mt-4 text-red-500">Error: {error}</p>}
+        {submitFunc.error && <p className="mt-4 text-red-500">Error: {submitFunc.error}</p>}
 
         
-        {result && (
+        {submitFunc.result && (
           <div className="mt-4 p-4 bg-green-100 text-green-800 rounded-lg">
             <p className="font-medium">Product added successfully!</p>
-            <p>New product ID: {result.id}</p>
+            <p>New product ID: {submitFunc.result.id}</p>
           </div>
         )}
 

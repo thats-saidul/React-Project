@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
-import { getProductById, updateProduct } from "../api/productApi";
+import useApicall from "../hooks/useApicall";
 
 function EditProduct() {
-  
   const { productid } = useParams();
 
   const [formData, setFormData] = useState({
@@ -14,69 +13,56 @@ function EditProduct() {
     category: "",
   });
 
-  const [loading, setLoading] = useState(true); 
-  const [saving, setSaving] = useState(false); 
-  const [error, setError] = useState(null);
-  const [result, setResult] = useState(null);
-
   
+  const getFunc = useApicall();
+  const submitFunc = useApicall();
+
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const data = await getProductById(productid);
-
-        setFormData({
-          title: data.title,
-          price: data.price,
-          description: data.description,
-          image: data.image,
-          category: data.category,
-        });
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProduct();
+    getFunc.fetchData(`https://fakestoreapi.com/products/${productid}`, {
+      method: "GET",
+    });
   }, [productid]);
 
- 
+  useEffect(() => {
+    if (getFunc.result) {
+      setFormData({
+        title: getFunc.result.title,
+        price: Math.round(getFunc.result.price),
+        description: getFunc.result.description,
+        image: getFunc.result.image,
+        category: getFunc.result.category,
+      });
+    }
+  }, [getFunc.result]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-   
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    try {
-      setSaving(true);
-      setError(null);
-      setResult(null);
-
-     
-      const payload = { ...formData, price: parseInt(formData.price, 10) };
-
-      const data = await updateProduct(productid, payload);
-      setResult(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
+    const payload = { ...formData, price: parseInt(formData.price, 10) };
+    submitFunc.fetchData(`https://fakestoreapi.com/products/${productid}`, { method: "PUT", body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } })
   };
 
   const inputClass =
     "w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500";
 
-  if (loading) {
-    return <div className="p-6 text-center text-xl text-white">Loading...</div>;
+  if (getFunc.error) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-xl text-red-500">Error: {getFunc.error}</p>
+        <Link to="/" className="inline-block mt-4 text-blue-600 underline">
+          Back to Home
+        </Link>
+      </div>
+    );
+  }
+
+  if (getFunc.loading || !getFunc.result) {
+    return <div className="p-6 text-center text-xl text-black">Loading...</div>;
   }
 
   return (
@@ -151,21 +137,21 @@ function EditProduct() {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={submitFunc.loading}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Update Product"}
+            {submitFunc.loading ? "Saving..." : "Update Product"}
           </button>
         </form>
 
-        
-        {error && <p className="mt-4 text-red-500">Error: {error}</p>}
+        {submitFunc.error && (
+          <p className="mt-4 text-red-500">Error: {submitFunc.error}</p>
+        )}
 
-        
-        {result && (
+        {submitFunc.result && (
           <div className="mt-4 p-4 bg-green-100 text-green-800 rounded-lg">
             <p className="font-medium">Product updated successfully!</p>
-            <p>Product ID: {result.id}</p>
+            <p>Product ID: {submitFunc.result.id}</p>
           </div>
         )}
 
