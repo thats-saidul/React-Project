@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
+import { getProductById } from "../api/productApi";
 
 const ProductDetails = () => {
-    // Get the product ID from the URL
     const { productid } = useParams();
-
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -15,29 +14,24 @@ const ProductDetails = () => {
                 setLoading(true);
                 setError(null);
 
-                const res = await fetch(
-                    `https://fakestoreapi.com/products/${productid}`
-                );
-                if (!res.ok) throw new Error("Failed to fetch product data");
-
-                const data = await res.json();
+            
+                const data = await getProductById(productid);
                 setProduct(data);
             } catch (err) {
                 setError(err.message);
             } finally {
                 setLoading(false);
             }
-        };
-
+            };
         fetchProduct();
     }, [productid]);
 
-    // Show a loading message while data is being fetched
+    
     if (loading) {
         return <div className="p-6 text-center text-xl">Loading...</div>;
     }
 
-    // Show an error message if the request failed or no product was found
+    
     if (error || !product) {
         return (
             <div className="p-6 text-center">
@@ -63,7 +57,7 @@ const ProductDetails = () => {
                 </h1>
 
                 <div className="flex flex-col md:flex-row gap-8">
-                    {/* Product Image */}
+                    
                     <div className="md:w-1/2">
                         <img
                             src={product.image}
@@ -72,7 +66,7 @@ const ProductDetails = () => {
                         />
                     </div>
 
-                    {/* Product Information */}
+                    
                     <div className="md:w-1/2 space-y-4">
                         <h2 className="text-2xl font-bold text-slate-800">
                             {product.title}
@@ -96,6 +90,13 @@ const ProductDetails = () => {
                         <p className="text-gray-600">
                             <strong>Product ID:</strong> {product.id}
                         </p>
+                        <Link
+                            to={`/edit-product/${product.id}`}
+                            className="inline-block bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition mr-3"
+                            >
+                            Edit
+                            </Link>
+
 
                         <Link
                             to="/"
